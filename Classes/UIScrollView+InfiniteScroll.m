@@ -181,6 +181,8 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
 
     // Mark infiniteScroll initialized
     state.initialized = YES;
+    
+    self.delegate = self;
 }
 
 - (void)removeInfiniteScroll {
@@ -303,7 +305,6 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
 + (void)load {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        PBSwizzleMethod(self, @selector(setContentOffset:), @selector(pb_setContentOffset:));
         PBSwizzleMethod(self, @selector(setContentSize:), @selector(pb_setContentSize:));
     });
 }
@@ -319,19 +320,6 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
 - (void)pb_handlePanGesture:(UITapGestureRecognizer *)gestureRecognizer {
     if(gestureRecognizer.state == UIGestureRecognizerStateEnded) {
         [self pb_scrollToInfiniteIndicatorIfNeeded:YES force:NO];
-    }
-}
-
-/**
- *  This is a swizzled proxy method for setContentOffset of UIScrollView.
- *
- *  @param contentOffset content offset
- */
-- (void)pb_setContentOffset:(CGPoint)contentOffset {
-    [self pb_setContentOffset:contentOffset];
-
-    if(self.pb_infiniteScrollState.initialized) {
-        [self pb_scrollViewDidScroll:contentOffset];
     }
 }
 
@@ -685,6 +673,10 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
             [self pb_beginInfinitScrollIfNeeded:NO];
         }
     }
+}
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView_ {
+    [self pb_scrollViewDidScroll:scrollView_.contentOffset];
 }
 
 /**
