@@ -21,7 +21,7 @@
 static void PBSwizzleMethod(Class c, SEL original, SEL alternate) {
     Method origMethod = class_getInstanceMethod(c, original);
     Method newMethod = class_getInstanceMethod(c, alternate);
-
+    
     if(class_addMethod(c, original, method_getImplementation(newMethod), method_getTypeEncoding(newMethod))) {
         class_replaceMethod(c, alternate, method_getImplementation(origMethod), method_getTypeEncoding(origMethod));
     } else {
@@ -129,18 +129,18 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
     if(!self) {
         return nil;
     }
-
+    
 #if TARGET_OS_TV
     _indicatorStyle = UIActivityIndicatorViewStyleWhite;
 #else
     _indicatorStyle = UIActivityIndicatorViewStyleGray;
 #endif
-
+    
     // Default row height (44) minus activity indicator height (22) / 2
     _indicatorMargin = 11;
-
+    
     _direction = InfiniteScrollDirectionVertical;
-
+    
     return self;
 }
 
@@ -166,43 +166,41 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
 
 - (void)addInfiniteScrollWithHandler:(void(^)(UIScrollView *scrollView))handler {
     _PBInfiniteScrollState *state = self.pb_infiniteScrollState;
-
+    
     // Save handler block
     state.infiniteScrollHandler = handler;
-
+    
     // Double initialization only replaces handler block
     // Do not continue if already initialized
     if(state.initialized) {
         return;
     }
-
+    
     // Add pan guesture handler
     [self.panGestureRecognizer addTarget:self action:@selector(pb_handlePanGesture:)];
-
+    
     // Mark infiniteScroll initialized
     state.initialized = YES;
-    
-    self.delegate = self;
 }
 
 - (void)removeInfiniteScroll {
     _PBInfiniteScrollState *state = self.pb_infiniteScrollState;
-
+    
     // Ignore multiple calls to remove infinite scroll
     if(!state.initialized) {
         return;
     }
-
+    
     // Remove pan gesture handler
     [self.panGestureRecognizer removeTarget:self action:@selector(pb_handlePanGesture:)];
-
+    
     // Destroy infinite scroll indicator
     [state.indicatorView removeFromSuperview];
     state.indicatorView = nil;
-
+    
     // Release handler block
     state.infiniteScrollHandler = nil;
-
+    
     // Mark infinite scroll as uninitialized
     state.initialized = NO;
 }
@@ -219,6 +217,10 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
     if(self.pb_infiniteScrollState.loading) {
         [self pb_stopAnimatingInfiniteScrollWithCompletion:handler];
     }
+}
+
+- (void)scrollViewDidScroll {
+    [self pb_scrollViewDidScroll:self.contentOffset];
 }
 
 #pragma mark - Accessors
@@ -239,7 +241,7 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
 - (void)setInfiniteScrollIndicatorStyle:(UIActivityIndicatorViewStyle)infiniteScrollIndicatorStyle {
     _PBInfiniteScrollState *state = self.pb_infiniteScrollState;
     state.indicatorStyle = infiniteScrollIndicatorStyle;
-
+    
     id activityIndicatorView = state.indicatorView;
     if([activityIndicatorView isKindOfClass:[UIActivityIndicatorView class]]) {
         [activityIndicatorView setActivityIndicatorViewStyle:infiniteScrollIndicatorStyle];
@@ -253,7 +255,7 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
 - (void)setInfiniteScrollIndicatorView:(UIView *)indicatorView {
     // make sure indicator is initially hidden
     indicatorView.hidden = YES;
-
+    
     self.pb_infiniteScrollState.indicatorView = indicatorView;
 }
 
@@ -271,7 +273,7 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
 
 - (void)setShouldShowInfiniteScrollHandler:(BOOL(^)(UIScrollView *scrollView))handler{
     _PBInfiniteScrollState *state = self.pb_infiniteScrollState;
-
+    
     // Save handler block
     state.shouldShowInfiniteScrollHandler = handler;
 }
@@ -289,13 +291,13 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
 
 - (_PBInfiniteScrollState *)pb_infiniteScrollState {
     _PBInfiniteScrollState *state = objc_getAssociatedObject(self, kPBInfiniteScrollStateKey);
-
+    
     if(!state) {
         state = [[_PBInfiniteScrollState alloc] init];
-
+        
         objc_setAssociatedObject(self, kPBInfiniteScrollStateKey, state, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
-
+    
     return state;
 }
 
@@ -330,7 +332,7 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
  */
 - (void)pb_setContentSize:(CGSize)contentSize {
     [self pb_setContentSize:contentSize];
-
+    
     if(self.pb_infiniteScrollState.initialized) {
         [self pb_positionInfiniteScrollIndicatorWithContentSize:contentSize];
     }
@@ -363,12 +365,12 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
  */
 - (BOOL)pb_hasContent {
     CGFloat constant = 0;
-
+    
     // Default UITableView reports height = 1 on empty tables
     if([self isKindOfClass:[UITableView class]]) {
         constant = 1;
     }
-
+    
     if (self.pb_infiniteScrollState.direction == InfiniteScrollDirectionVertical) {
         return self.contentSize.height > constant;
     } else {
@@ -383,7 +385,7 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
  */
 - (CGFloat)pb_originalEndInset {
     _PBInfiniteScrollState *state = self.pb_infiniteScrollState;
-
+    
     if (state.direction == InfiniteScrollDirectionVertical) {
         return self.contentInset.bottom - state.extraEndInset - state.indicatorInset;
     } else {
@@ -396,11 +398,11 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
  */
 - (void)pb_callInfiniteScrollHandler {
     _PBInfiniteScrollState *state = self.pb_infiniteScrollState;
-
+    
     if(state.infiniteScrollHandler) {
         state.infiniteScrollHandler(self);
     }
-
+    
     TRACE(@"Call handler.");
 }
 
@@ -411,17 +413,17 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
  */
 - (UIView *)pb_getOrCreateActivityIndicatorView {
     UIView *activityIndicator = self.infiniteScrollIndicatorView;
-
+    
     if(!activityIndicator) {
         activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:self.infiniteScrollIndicatorStyle];
         self.infiniteScrollIndicatorView = activityIndicator;
     }
-
+    
     // Add activity indicator into scroll view if needed
     if(activityIndicator.superview != self) {
         [self addSubview:activityIndicator];
     }
-
+    
     return activityIndicator;
 }
 
@@ -432,7 +434,7 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
  */
 - (CGFloat)pb_infiniteIndicatorRowSize {
     UIView *activityIndicator = [self pb_getOrCreateActivityIndicatorView];
-
+    
     if (self.pb_infiniteScrollState.direction == InfiniteScrollDirectionVertical) {
         CGFloat indicatorHeight = CGRectGetHeight(activityIndicator.bounds);
         return indicatorHeight + self.infiniteScrollIndicatorMargin * 2;
@@ -451,14 +453,14 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
     UIView *activityIndicator = [self pb_getOrCreateActivityIndicatorView];
     CGFloat contentLength = [self pb_clampContentSizeToFitVisibleBounds:contentSize];
     CGFloat indicatorRowSize = [self pb_infiniteIndicatorRowSize];
-
+    
     CGPoint center;
     if (self.pb_infiniteScrollState.direction == InfiniteScrollDirectionVertical) {
         center = CGPointMake(contentSize.width * 0.5, contentLength + indicatorRowSize * 0.5);
     } else {
         center = CGPointMake(contentLength + indicatorRowSize * 0.5, contentSize.height * 0.5);
     }
-
+    
     if(!CGPointEqualToPoint(activityIndicator.center, center)) {
         activityIndicator.center = center;
     }
@@ -471,20 +473,18 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
  */
 - (void)pb_beginInfinitScrollIfNeeded:(BOOL)forceScroll {
     _PBInfiniteScrollState *state = self.pb_infiniteScrollState;
-
+    
     // already loading?
     if(state.loading) {
         return;
     }
-
+    
     TRACE(@"Action.");
-
+    
     // Only show the infinite scroll if it is allowed
     if([self pb_shouldShowInfiniteScroll]) {
         [self pb_startAnimatingInfiniteScroll:forceScroll];
-
-        // This will delay handler execution until scroll deceleration
-        [self performSelector:@selector(pb_callInfiniteScrollHandler) withObject:self afterDelay:0.1 inModes:@[ NSDefaultRunLoopMode ]];
+        [self pb_callInfiniteScrollHandler];
     }
 }
 
@@ -494,28 +494,28 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
 - (void)pb_startAnimatingInfiniteScroll:(BOOL)forceScroll {
     _PBInfiniteScrollState *state = self.pb_infiniteScrollState;
     UIView *activityIndicator = [self pb_getOrCreateActivityIndicatorView];
-
+    
     // Layout indicator view
     [self pb_positionInfiniteScrollIndicatorWithContentSize:self.contentSize];
-
+    
     // It's show time!
     activityIndicator.hidden = NO;
     if([activityIndicator respondsToSelector:@selector(startAnimating)]) {
         [activityIndicator performSelector:@selector(startAnimating)];
     }
-
+    
     // Calculate indicator view inset
     CGFloat indicatorInset = [self pb_infiniteIndicatorRowSize];
-
+    
     UIEdgeInsets contentInset = self.contentInset;
-
+    
     // Make a room to accommodate indicator view
     if (state.direction == InfiniteScrollDirectionVertical) {
         contentInset.bottom += indicatorInset;
     } else {
         contentInset.right += indicatorInset;
     }
-
+    
     // We have to pad scroll view when content size is smaller than view bounds.
     // This will guarantee that indicator view appears at the very end of scroll view.
     CGFloat adjustedContentSize = [self pb_clampContentSizeToFitVisibleBounds:self.contentSize];
@@ -523,33 +523,33 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
     if (state.direction == InfiniteScrollDirectionVertical) {
         CGFloat extraBottomInset = adjustedContentSize - self.contentSize.height;
         contentInset.bottom += extraBottomInset;
-
+        
         // Save extra inset
         state.extraEndInset = extraBottomInset;
     } else {
         CGFloat extraRightInset = adjustedContentSize - self.contentSize.width;
         contentInset.right += extraRightInset;
-
+        
         // Save extra inset
         state.extraEndInset = extraRightInset;
     }
-
+    
     // Save indicator view inset
     state.indicatorInset = indicatorInset;
-
+    
     // Update infinite scroll state
     state.loading = YES;
-
+    
     // Scroll to start if scroll view had no content before update
     state.scrollToStartWhenFinished = ![self pb_hasContent];
-
+    
     // Animate content insets
     [self pb_setScrollViewContentInset:contentInset animated:YES completion:^(BOOL finished) {
         if(finished) {
             [self pb_scrollToInfiniteIndicatorIfNeeded:YES force:forceScroll];
         }
     }];
-
+    
     TRACE(@"Start animating.");
 }
 
@@ -562,7 +562,7 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
     _PBInfiniteScrollState *state = self.pb_infiniteScrollState;
     UIView *activityIndicator = self.infiniteScrollIndicatorView;
     UIEdgeInsets contentInset = self.contentInset;
-
+    
     // Force the table view to update its contentSize; if we don't do this,
     // finishInfiniteScroll() will adjust contentInsets and cause contentOffset
     // to be off by an amount equal to the height of the activity indicator.
@@ -573,7 +573,7 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
     if([self isKindOfClass:[UITableView class]]) {
         PBForceUpdateTableViewContentSize((UITableView *)self);
     }
-
+    
     if (state.direction == InfiniteScrollDirectionVertical) {
         // Remove row height inset
         contentInset.bottom -= state.indicatorInset;
@@ -585,13 +585,13 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
         // Remove extra inset added to pad infinite scroll
         contentInset.right -= state.extraEndInset;
     }
-
+    
     // Reset indicator view inset
     state.indicatorInset = 0;
-
+    
     // Reset extra end inset
     state.extraEndInset = 0;
-
+    
     // Animate content insets
     [self pb_setScrollViewContentInset:contentInset animated:YES completion:^(BOOL finished) {
         // Initiate scroll to the end if due to user interaction contentOffset
@@ -603,33 +603,33 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
                 [self pb_scrollToInfiniteIndicatorIfNeeded:NO force:NO];
             }
         }
-
+        
         // Curtain is closing they're throwing roses at my feet
         if([activityIndicator respondsToSelector:@selector(stopAnimating)]) {
             [activityIndicator performSelector:@selector(stopAnimating)];
         }
         activityIndicator.hidden = YES;
-
+        
         // Reset scroll state
         state.loading = NO;
-
+        
         // Call completion handler
         if(handler) {
             handler(self);
         }
     }];
-
+    
     TRACE(@"Stop animating.");
 }
 
 - (BOOL)pb_shouldShowInfiniteScroll {
     _PBInfiniteScrollState *state = self.pb_infiniteScrollState;
-
+    
     // Ensure we should show the inifinite scroll
     if(state.shouldShowInfiniteScrollHandler) {
         return state.shouldShowInfiniteScrollHandler(self);
     }
-
+    
     return YES;
 }
 
@@ -643,20 +643,20 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
     if(![self isDragging]) {
         return;
     }
-
+    
     _PBInfiniteScrollState *state = self.pb_infiniteScrollState;
-
+    
     CGFloat contentSize = [self pb_clampContentSizeToFitVisibleBounds:self.contentSize];
-
+    
     if (state.direction == InfiniteScrollDirectionVertical) {
         // The lower bound when infinite scroll should kick in
         CGPoint actionOffset;
         actionOffset.x = 0;
         actionOffset.y = contentSize - self.bounds.size.height + [self pb_originalEndInset];
-
+        
         // apply trigger offset adjustment
         actionOffset.y -= state.triggerOffset;
-
+        
         if(contentOffset.y > actionOffset.y && [[self panGestureRecognizer] velocityInView: self].y <= 0) {
             [self pb_beginInfinitScrollIfNeeded:NO];
         }
@@ -665,18 +665,14 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
         CGPoint actionOffset;
         actionOffset.x = contentSize - self.bounds.size.width + [self pb_originalEndInset];
         actionOffset.y = 0;
-
+        
         // apply trigger offset adjustment
         actionOffset.x -= state.triggerOffset;
-
+        
         if(contentOffset.x > actionOffset.x && [[self panGestureRecognizer] velocityInView: self].x <= 0) {
             [self pb_beginInfinitScrollIfNeeded:NO];
         }
     }
-}
-
-- (void)scrollViewDidScroll:(UIScrollView *)scrollView_ {
-    [self pb_scrollViewDidScroll:scrollView_.contentOffset];
 }
 
 /**
@@ -684,7 +680,7 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
  */
 - (void)pb_scrollToStart {
     CGPoint pt = CGPointZero;
-
+    
     if (self.pb_infiniteScrollState.direction == InfiniteScrollDirectionVertical) {
         pt.x = self.contentOffset.x;
         pt.y = self.contentInset.top * -1;
@@ -692,7 +688,7 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
         pt.x = self.contentInset.left * -1;
         pt.y = self.contentOffset.y;
     }
-
+    
     [self setContentOffset:pt animated:YES];
 }
 
@@ -707,31 +703,31 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
     if([self isDragging]) {
         return;
     }
-
+    
     _PBInfiniteScrollState *state = self.pb_infiniteScrollState;
-
+    
     // filter out calls from pan gesture
     if(!state.loading) {
         return;
     }
-
+    
     // Force table view to update content size
     if([self isKindOfClass:[UITableView class]]) {
         PBForceUpdateTableViewContentSize((UITableView *)self);
     }
-
+    
     CGFloat contentSize = [self pb_clampContentSizeToFitVisibleBounds:self.contentSize];
     CGFloat indicatorRowSize = [self pb_infiniteIndicatorRowSize];
-
+    
     if (state.direction == InfiniteScrollDirectionVertical) {
         CGFloat minY = contentSize - self.bounds.size.height + [self pb_originalEndInset];
         CGFloat maxY = minY + indicatorRowSize;
-
+        
         TRACE(@"minY = %.2f; maxY = %.2f; offsetY = %.2f", minY, maxY, self.contentOffset.y);
-
+        
         if((self.contentOffset.y > minY && self.contentOffset.y < maxY) || force) {
             TRACE(@"Scroll to infinite indicator. Reveal: %@", reveal ? @"YES" : @"NO");
-
+            
             // Use -scrollToRowAtIndexPath: in case of UITableView
             // Because -setContentOffset: may not work properly when using self-sizing cells
             if([self isKindOfClass:[UITableView class]]) {
@@ -740,28 +736,28 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
                 NSInteger lastSection = numSections - 1;
                 NSInteger numRows = lastSection >= 0 ? [tableView numberOfRowsInSection:lastSection] : 0;
                 NSInteger lastRow = numRows - 1;
-
+                
                 if(lastSection >= 0 && lastRow >= 0) {
                     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:lastRow inSection:lastSection];
                     UITableViewScrollPosition scrollPos = reveal ? UITableViewScrollPositionTop : UITableViewScrollPositionBottom;
-
+                    
                     [tableView scrollToRowAtIndexPath:indexPath atScrollPosition:scrollPos animated:YES];
-
+                    
                     // explicit return
                     return;
                 }
-
+                
                 // setContentOffset: works fine for empty table view.
             }
-
+            
             [self setContentOffset:CGPointMake(self.contentOffset.x, reveal ? maxY : minY) animated:YES];
         }
     } else {
         CGFloat minX = contentSize - self.bounds.size.width + [self pb_originalEndInset];
         CGFloat maxX = minX + indicatorRowSize;
-
+        
         TRACE(@"minX = %.2f; maxX = %.2f; offsetX = %.2f", minX, maxX, self.contentOffset.x);
-
+        
         if((self.contentOffset.x > minX && self.contentOffset.x < maxX) || force) {
             TRACE(@"Scroll to infinite indicator. Reveal: %@", reveal ? @"YES" : @"NO");
             [self setContentOffset:CGPointMake(reveal ? maxX : minX, self.contentOffset.y) animated:YES];
@@ -780,7 +776,7 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
     void(^animations)(void) = ^{
         self.contentInset = contentInset;
     };
-
+    
     if(animated)
     {
         [UIView animateWithDuration:kPBInfiniteScrollAnimationDuration
@@ -792,7 +788,7 @@ static const void *kPBInfiniteScrollStateKey = &kPBInfiniteScrollStateKey;
     else
     {
         [UIView performWithoutAnimation:animations];
-
+        
         if(completion) {
             completion(YES);
         }

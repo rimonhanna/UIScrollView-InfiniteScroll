@@ -15,18 +15,18 @@ NS_ASSUME_NONNULL_BEGIN
  Enum that describes the infinite scroll direction.
  */
 typedef NS_ENUM(NSUInteger, InfiniteScrollDirection) {
-	/**
-	 *  Trigger infinite scroll when the scroll view reaches the bottom.
-	 *  This is the default. It is also the only supported direction for
-	 *  table views.
-	 */
-	InfiniteScrollDirectionVertical,
-
-	/**
-	 *  Trigger infinite scroll when the scroll view reaches the right edge.
-	 *  This should be used for horizontally scrolling collection views.
-	 */
-	InfiniteScrollDirectionHorizontal,
+    /**
+     *  Trigger infinite scroll when the scroll view reaches the bottom.
+     *  This is the default. It is also the only supported direction for
+     *  table views.
+     */
+    InfiniteScrollDirectionVertical,
+    
+    /**
+     *  Trigger infinite scroll when the scroll view reaches the right edge.
+     *  This should be used for horizontally scrolling collection views.
+     */
+    InfiniteScrollDirectionHorizontal,
 };
 
 /**
@@ -52,7 +52,7 @@ typedef NS_ENUM(NSUInteger, InfiniteScrollDirection) {
 /**
  *  Infinite indicator view
  *
- *  You can set your own custom view instead of default activity indicator, 
+ *  You can set your own custom view instead of default activity indicator,
  *  make sure it implements methods below:
  *
  *  * `- (void)startAnimating`
@@ -69,7 +69,7 @@ typedef NS_ENUM(NSUInteger, InfiniteScrollDirection) {
 
 /**
  *  Set adjustment for scroll coordinate used to determine when to call handler block.
- *  Non-zero value advances the point when handler block is being called 
+ *  Non-zero value advances the point when handler block is being called
  *  making it fire by N points earlier before scroll view reaches the bottom or right edge.
  *  This value is measured in points and must be positive number.
  *  Default: 0.0
@@ -121,6 +121,15 @@ typedef NS_ENUM(NSUInteger, InfiniteScrollDirection) {
  *  animations properly and reset infinite scroll state
  */
 - (void)finishInfiniteScroll;
+
+
+/**
+ *  Scroll view did scroll delegate method
+ *
+ *  You must call this method from your scrollViewDidScroll scroll view delegate method
+ *  to trigger the scrolling behavior
+ */
+- (void)scrollViewDidScroll;
 
 @end
 
